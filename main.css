@@ -1186,7 +1186,7 @@ main h3 {
     padding: 0.5rem 1rem;
     border-radius: 5px;
     cursor: pointer;
-    position: relative;
+    position: forelative;
     overflow: hidden;
 }
 
@@ -1858,7 +1858,12 @@ main h3 {
     }
 
     .desktop-nav {
-        margin-right: 1rem;
+        margin-right: 2rem;
+        margin-left: auto;
+    }
+
+    .desktop-nav ul {
+        gap: 1rem;
     }
 
     .news-grid {
@@ -1978,6 +1983,15 @@ main h3 {
     .search-form {
         max-width: 160px;
         margin-left: 1rem;
+    }
+
+    .desktop-nav {
+        margin-right: 2rem;
+        margin-left: auto;
+    }
+
+    .desktop-nav ul {
+        gap: 1rem;
     }
 
     .admin-container {

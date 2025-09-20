@@ -459,7 +459,7 @@ async function loadArticle() {
       likeCount.textContent = article.likes || 0;
 
       // Initialize save and like button states for anonymous users
-      const saveButton = document.querySelector('.save-button');
+      const saveButton = document.querySelector('.article-card .save-button');
       if (saveButton) {
         const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
         if (savedArticles.includes(articleId)) {
@@ -469,7 +469,7 @@ async function loadArticle() {
         }
       }
 
-      const likeButton = document.querySelector('.like-button');
+      const likeButton = document.querySelector('.article-card .like-button');
       if (likeButton) {
         const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
         if (likedArticles.includes(articleId)) {
@@ -499,31 +499,31 @@ async function loadArticle() {
 }
 
 // Like button
-document.querySelectorAll('.like-button').forEach(button => {
+document.querySelectorAll('.article-card .like-button, #category-articles .news-card .like-button').forEach(button => {
   button.addEventListener('click', async () => {
     const parentCard = button.closest('.article-card, .news-card');
     const articleId = parentCard?.dataset.id;
     const likeCountSpan = button.querySelector('#like-count');
 
     if (!parentCard) {
-      console.error('Like button is not inside an .article-card or .news-card element');
-      displayErrorMessage('.article-actions, #latest-news-articles, #politics-articles, #category-articles, #search-results', 'Unable to like article: Article container missing.');
+      console.error('Like button is not inside an .article-card or #category-articles .news-card element');
+      displayErrorMessage('.article-actions, #category-articles', 'Unable to like article: Article container missing.');
       return;
     }
     if (!articleId) {
       console.error('Article ID is missing or empty in .article-card or .news-card');
-      displayErrorMessage('.article-actions, #latest-news-articles, #politics-articles, #category-articles, #search-results', 'Unable to like article: Article ID not found. Ensure the article loaded correctly.');
+      displayErrorMessage('.article-actions, #category-articles', 'Unable to like article: Article ID not found. Ensure the article loaded correctly.');
       return;
     }
     if (!likeCountSpan) {
       console.error('Like count span (#like-count) not found inside .like-button');
-      displayErrorMessage('.article-actions, #latest-news-articles, #politics-articles, #category-articles, #search-results', 'Unable to like article: Like count element missing.');
+      displayErrorMessage('.article-actions, #category-articles', 'Unable to like article: Like count element missing.');
       return;
     }
 
     const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
     if (likedArticles.includes(articleId)) {
-      displayErrorMessage('.article-actions, #latest-news-articles, #politics-articles, #category-articles, #search-results', 'You have already liked this article.');
+      displayErrorMessage('.article-actions, #category-articles', 'You have already liked this article.');
       return;
     }
 
@@ -541,7 +541,7 @@ document.querySelectorAll('.like-button').forEach(button => {
         console.log(`Like recorded for article ID: ${articleId}`);
       } catch (error) {
         console.error('Error updating likes in Firestore:', error.message);
-        displayErrorMessage('.article-actions, #latest-news-articles, #politics-articles, #category-articles, #search-results', 'Failed to save like. Please try again.');
+        displayErrorMessage('.article-actions, #category-articles', 'Failed to save like. Please try again.');
         likeCountSpan.textContent = count;
         button.classList.remove('liked');
         button.disabled = false;
@@ -550,6 +550,7 @@ document.querySelectorAll('.like-button').forEach(button => {
     }
   });
 });
+
 // Comment submission
 document.querySelectorAll('.comment-submit').forEach(button => {
   button.addEventListener('click', async (e) => {
@@ -570,7 +571,7 @@ document.querySelectorAll('.comment-submit').forEach(button => {
         await withRetry(() => addDoc(collection(db, 'articles', articleId, 'comments'), {
           text: commentInput.value.trim(),
           timestamp: serverTimestamp(),
-          author: 'Anonymous' // Explicitly set to Anonymous
+          author: 'Anonymous'
         }));
         commentInput.value = '';
         loadComments(articleId);
@@ -584,24 +585,24 @@ document.querySelectorAll('.comment-submit').forEach(button => {
 });
 
 // Save article
-document.querySelectorAll('.save-button').forEach(button => {
+document.querySelectorAll('.article-card .save-button, #category-articles .news-card .save-button').forEach(button => {
   button.addEventListener('click', () => {
     const parentCard = button.closest('.article-card, .news-card');
     const articleId = parentCard?.dataset.id;
     if (!parentCard) {
-      console.error('Save button is not inside an .article-card or .news-card element');
-      displayErrorMessage('.article-actions, #latest-news-articles, #politics-articles, #category-articles, #search-results', 'Unable to save article: Article container missing.');
+      console.error('Save button is not inside an .article-card or #category-articles .news-card element');
+      displayErrorMessage('.article-actions, #category-articles', 'Unable to save article: Article container missing.');
       return;
     }
     if (!articleId) {
       console.error('Article ID not found for save action');
-      displayErrorMessage('.article-actions, #latest-news-articles, #politics-articles, #category-articles, #search-results', 'Unable to save article: Article ID missing.');
+      displayErrorMessage('.article-actions, #category-articles', 'Unable to save article: Article ID missing.');
       return;
     }
 
     const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
     if (savedArticles.includes(articleId)) {
-      displayErrorMessage('.article-actions, #latest-news-articles, #politics-articles, #category-articles, #search-results', 'This article is already saved.');
+      displayErrorMessage('.article-actions, #category-articles', 'This article is already saved.');
       return;
     }
 
@@ -672,47 +673,8 @@ async function fetchPoliticsArticles(reset = false) {
           ${article.breakingNews ? '<span class="breaking-news-badge">Breaking News</span>' : ''}
           ${article.verified ? '<span class="verified-badge">Verified</span>' : ''}
         </a>
-        <div class="article-actions">
-          <div class="action-wrapper">
-            <button class="like-button" aria-label="Like article">
-              <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
-              <span class="action-text">Like</span>
-              <span id="like-count">${article.likes || 0}</span>
-            </button>
-          </div>
-          <div class="action-wrapper">
-            <button class="save-button" aria-label="Save article">
-              <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"></path></svg>
-              <span class="action-text">Save</span>
-            </button>
-          </div>
-        </div>
       `;
       politicsArticles.appendChild(articleElement);
-    });
-
-    // Initialize button states for anonymous users
-    document.querySelectorAll('.news-card .save-button').forEach(button => {
-      const articleId = button.closest('.news-card')?.dataset.id;
-      if (articleId) {
-        const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
-        if (savedArticles.includes(articleId)) {
-          button.classList.add('saved');
-          button.querySelector('.action-text').textContent = 'Saved';
-          button.disabled = true;
-        }
-      }
-    });
-
-    document.querySelectorAll('.news-card .like-button').forEach(button => {
-      const articleId = button.closest('.news-card')?.dataset.id;
-      if (articleId) {
-        const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
-        if (likedArticles.includes(articleId)) {
-          button.classList.add('liked');
-          button.disabled = true;
-        }
-      }
     });
 
     lastVisiblePolitics = snapshot.docs[snapshot.docs.length - 1];
@@ -722,7 +684,6 @@ async function fetchPoliticsArticles(reset = false) {
     displayErrorMessage('#politics-articles', 'Failed to load politics articles. Please try again.');
   }
 }
-
 // Load latest news articles
 async function loadLatestNewsArticles(category = '') {
   const latestNewsArticles = document.getElementById('latest-news-articles');
@@ -788,47 +749,8 @@ async function fetchLatestNewsArticles(reset = false, loadMoreButton, category =
           ${article.breakingNews ? '<span class="breaking-news-badge">Breaking News</span>' : ''}
           ${article.verified ? '<span class="verified-badge">Verified</span>' : ''}
         </a>
-        <div class="article-actions">
-          <div class="action-wrapper">
-            <button class="like-button" aria-label="Like article">
-              <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
-              <span class="action-text">Like</span>
-              <span id="like-count">${article.likes || 0}</span>
-            </button>
-          </div>
-          <div class="action-wrapper">
-            <button class="save-button" aria-label="Save article">
-              <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"></path></svg>
-              <span class="action-text">Save</span>
-            </button>
-          </div>
-        </div>
       `;
       latestNewsArticles.appendChild(articleElement);
-    });
-
-    // Initialize button states for anonymous users
-    document.querySelectorAll('.news-card .save-button').forEach(button => {
-      const articleId = button.closest('.news-card')?.dataset.id;
-      if (articleId) {
-        const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
-        if (savedArticles.includes(articleId)) {
-          button.classList.add('saved');
-          button.querySelector('.action-text').textContent = 'Saved';
-          button.disabled = true;
-        }
-      }
-    });
-
-    document.querySelectorAll('.news-card .like-button').forEach(button => {
-      const articleId = button.closest('.news-card')?.dataset.id;
-      if (articleId) {
-        const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
-        if (likedArticles.includes(articleId)) {
-          button.classList.add('liked');
-          button.disabled = true;
-        }
-      }
     });
 
     lastVisibleLatest = snapshot.docs[snapshot.docs.length - 1];
@@ -938,26 +860,25 @@ async function fetchCategoryArticles(category, reset = false) {
           ${article.verified ? '<span class="verified-badge">Verified</span>' : ''}
         </a>
         <div class="article-actions">
-          <div class="action-wrapper">
-            <button class="like-button" aria-label="Like article">
-              <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
-              <span class="action-text">Like</span>
-              <span id="like-count">${article.likes || 0}</span>
-            </button>
-          </div>
-          <div class="action-wrapper">
-            <button class="save-button" aria-label="Save article">
-              <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"></path></svg>
-              <span class="action-text">Save</span>
-            </button>
-          </div>
+          <button class="like-button ripple-btn" aria-label="Like this article">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+            <span id="like-count">${article.likes || 0}</span>
+          </button>
+          <button class="save-button ripple-btn" aria-label="Save this article">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span class="action-text">Save</span>
+          </button>
         </div>
       `;
       categoryArticles.appendChild(articleElement);
     });
 
     // Initialize button states for anonymous users
-    document.querySelectorAll('.news-card .save-button').forEach(button => {
+    document.querySelectorAll('#category-articles .news-card .save-button').forEach(button => {
       const articleId = button.closest('.news-card')?.dataset.id;
       if (articleId) {
         const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
@@ -969,7 +890,7 @@ async function fetchCategoryArticles(category, reset = false) {
       }
     });
 
-    document.querySelectorAll('.news-card .like-button').forEach(button => {
+    document.querySelectorAll('#category-articles .news-card .like-button').forEach(button => {
       const articleId = button.closest('.news-card')?.dataset.id;
       if (articleId) {
         const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
@@ -1128,47 +1049,8 @@ async function loadSearchResults() {
           ${article.breakingNews ? '<span class="breaking-news-badge">Breaking News</span>' : ''}
           ${article.verified ? '<span class="verified-badge">Verified</span>' : ''}
         </a>
-        <div class="article-actions">
-          <div class="action-wrapper">
-            <button class="like-button" aria-label="Like article">
-              <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
-              <span class="action-text">Like</span>
-              <span id="like-count">${article.likes || 0}</span>
-            </button>
-          </div>
-          <div class="action-wrapper">
-            <button class="save-button" aria-label="Save article">
-              <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"></path></svg>
-              <span class="action-text">Save</span>
-            </button>
-          </div>
-        </div>
       `;
       searchResults.appendChild(articleElement);
-    });
-
-    // Initialize button states for anonymous users
-    document.querySelectorAll('.news-card .save-button').forEach(button => {
-      const articleId = button.closest('.news-card')?.dataset.id;
-      if (articleId) {
-        const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
-        if (savedArticles.includes(articleId)) {
-          button.classList.add('saved');
-          button.querySelector('.action-text').textContent = 'Saved';
-          button.disabled = true;
-        }
-      }
-    });
-
-    document.querySelectorAll('.news-card .like-button').forEach(button => {
-      const articleId = button.closest('.news-card')?.dataset.id;
-      if (articleId) {
-        const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
-        if (likedArticles.includes(articleId)) {
-          button.classList.add('liked');
-          button.disabled = true;
-        }
-      }
     });
   } catch (error) {
     console.error('Error loading search results:', error.message);
@@ -1842,31 +1724,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loadSearchResults();
       }
       loadArticles();
-
-      // Initialize save button states for all articles
-      document.querySelectorAll('.save-button').forEach(button => {
-        const articleId = button.closest('.article-card, .news-card')?.dataset.id;
-        if (articleId) {
-          const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
-          if (savedArticles.includes(articleId)) {
-            button.classList.add('saved');
-            button.querySelector('.action-text').textContent = 'Saved';
-            button.disabled = true;
-          }
-        }
-      });
-
-      // Initialize like button states for all articles
-      document.querySelectorAll('.like-button').forEach(button => {
-        const articleId = button.closest('.article-card, .news-card')?.dataset.id;
-        if (articleId) {
-          const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
-          if (likedArticles.includes(articleId)) {
-            button.classList.add('liked');
-            button.disabled = true;
-          }
-        }
-      });
     }
     const preloader = document.getElementById('preloader');
     if (preloader) {

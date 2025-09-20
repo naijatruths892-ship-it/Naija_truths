@@ -532,7 +532,7 @@ main h3 {
 .verified-badge {
     background: linear-gradient(90deg, #1e90ff 0%, #00b7eb 100%) padding-box;
     color: #fff;
-    padding: 0.1rem 0.2rem;
+    padding: 0.2rem 0.4rem;
     border-radius: 3px;
     font-size: 0.75rem;
     font-family: 'Poppins', sans-serif;
@@ -563,7 +563,7 @@ main h3 {
 .breaking-news-badge {
     background: linear-gradient(90deg, #FFD700 0%, #FFA500 100%) padding-box;
     color: #1a3c34;
-    padding: 0.1rem 0.2rem;
+    padding: 0.2rem 0.4rem;
     border-radius: 3px;
     font-size: 0.75rem;
     font-family: 'Bebas Neue', sans-serif;
@@ -599,18 +599,6 @@ main h3 {
 
 .breaking-news-card h2 {
     font-size: 3.2rem;
-}
-
-.fact-check-card img {
-    width: 100%;
-    height: 150px;
-    object-fit: cover;
-    display: block;
-    outline: none;
-}
-
-.fact-check-card h3 {
-    font-size: 1.3rem;
 }
 
 /* Subcategory Navigation */
@@ -1186,7 +1174,7 @@ main h3 {
     padding: 0.5rem 1rem;
     border-radius: 5px;
     cursor: pointer;
-    position: forelative;
+    position: relative;
     overflow: hidden;
 }
 
@@ -1649,10 +1637,6 @@ main h3 {
         height: 250px;
     }
 
-    .fact-check-card img {
-        height: 120px;
-    }
-
     .news-grid {
         grid-template-columns: 1fr;
     }
@@ -1733,7 +1717,7 @@ main h3 {
 
     .verified-badge {
         font-size: 0.65rem;
-        padding: 0.1rem 0.15rem;
+        padding: 0.15rem 0.3rem;
         margin: 0.15rem 0.3rem;
         background-size: 100% 100%;
         width: fit-content;
@@ -1741,14 +1725,10 @@ main h3 {
 
     .breaking-news-badge {
         font-size: 0.65rem;
-        padding: 0.1rem 0.15rem;
+        padding: 0.15rem 0.3rem;
         margin: 0.15rem 0.3rem;
         background-size: 100% 100%;
         width: fit-content;
-    }
-
-    .ripple-btn {
-        transform: scale(1);
     }
 
     .scroll-to-top-wrapper {
@@ -1874,10 +1854,6 @@ main h3 {
         height: 300px;
     }
 
-    .fact-check-card img {
-        height: 130px;
-    }
-
     .article-image-container {
         max-height: 300px;
         overflow: hidden;
@@ -1941,16 +1917,16 @@ main h3 {
 
     .verified-badge {
         font-size: 0.7rem;
-        padding: 0.1rem 0.2rem;
-        margin: 0.15rem 0.35rem;
+        padding: 0.15rem 0.3rem;
+        margin: 0.15rem 0.3rem;
         background-size: 100% 100%;
         width: fit-content;
     }
 
     .breaking-news-badge {
         font-size: 0.7rem;
-        padding: 0.1rem 0.2rem;
-        margin: 0.15rem 0.35rem;
+        padding: 0.15rem 0.3rem;
+        margin: 0.15rem 0.3rem;
         background-size: 100% 100%;
         width: fit-content;
     }

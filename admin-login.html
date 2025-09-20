@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Admin login for Naija Truths.">
+  <meta name="keywords" content="Naija Truths, Admin Login">
+  <meta name="author" content="Naija Truths Team">
+  <meta property="og:title" content="Naija Truths - Admin Login">
+  <meta property="og:description" content="Admin login for Naija Truths.">
+  <meta property="og:image" content="https://via.placeholder.com/1200x630">
+  <meta property="og:url" content="https://naija-truths.netlify.app/admin-login.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@NaijaTruths">
+  <title>Naija Truths - Admin Login</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&family=Bebas+Neue&display=swap">
+  <link rel="stylesheet" href="main.css">
+  <script type="module" src="https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/12.2.1/firebase-storage.js"></script>
+  <script>
+    window.env = window.env || {};
+    window.env.VITE_FIREBASE_API_KEY = 'AIzaSyDrzSgCHn53kfa4dJJVJhDD717v8SPozR0';
+    window.env.VITE_FIREBASE_AUTH_DOMAIN = 'naija-truths.firebaseapp.com';
+    window.env.VITE_FIREBASE_PROJECT_ID = 'naija-truths';
+    window.env.VITE_FIREBASE_STORAGE_BUCKET = 'naija-truths.firebasestorage.app';
+    window.env.VITE_FIREBASE_MESSAGING_SENDER_ID = '476936659655';
+    window.env.VITE_FIREBASE_APP_ID = '1:476936659655:web:0df8b9419012dac9e014e2';
+    window.env.VITE_FIREBASE_MEASUREMENT_ID = 'G-69WH8S8X8H';
+  </script>
+  <script type="module" src="main.js"></script>
+</head>
+<body>
+  <div id="preloader">
+    <div class="spinner"></div>
+  </div>
+  <header class="header">
+    <div class="logo">
+      <svg width="100" height="50" viewBox="0 0 140 70" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="ntGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#28a745;stop-opacity:1" />
+          </linearGradient>
+          <filter id="shadow">
+            <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.5"/>
+          </filter>
+        </defs>
+        <text x="10" y="50" font-family="Bebas Neue, sans-serif" font-weight="900" font-size="56" fill="url(#ntGradient)" stroke="#28a745" stroke-width="3" letter-spacing="-4" class="logo-text" filter="url(#shadow)">NT</text>
+      </svg>
+    </div>
+    <div class="header-inner">
+      <div class="header-title-wrapper">
+        <span class="site-title">Naija Truths</span>
+        <span class="site-subtitle">• Unfiltered • Unbiased • Unafraid</span>
+      </div>
+    </div>
+  </header>
+  <main>
+    <section class="admin-login-section">
+      <div class="content">
+        <h2>Admin Login</h2>
+        <form id="admin-login-form">
+          <label for="email">Email:</label>
+          <input type="email" id="email" name="email" required aria-label="Admin email">
+          <label for="password">Password:</label>
+          <input type="password" id="password" name="password" required aria-label="Admin password">
+          <button type="submit" aria-label="Log in">Log In</button>
+        </form>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

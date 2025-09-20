@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Naija Truths - Read the latest news article">
+  <meta name="keywords" content="Naija Truths, Nigeria News, Article">
+  <meta name="author" content="Naija Truths Team">
+  <meta property="og:title" content="Naija Truths - Article">
+  <meta property="og:description" content="Read the latest news article on Naija Truths.">
+  <meta property="og:image" content="https://via.placeholder.com/1200x630">
+  <meta property="og:url" content="https://naija-truths.netlify.app/article.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@NaijaTruths">
+  <title>Naija Truths - Article</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&family=Bebas+Neue&display=swap">
+  <link rel="stylesheet" href="main.css">
+  <script type="module" src="https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/12.2.1/firebase-storage.js"></script>
+  <script>
+    window.env = window.env || {};
+    window.env.VITE_FIREBASE_API_KEY = 'AIzaSyDrzSgCHn53kfa4dJJVJhDD717v8SPozR0';
+    window.env.VITE_FIREBASE_AUTH_DOMAIN = 'naija-truths.firebaseapp.com';
+    window.env.VITE_FIREBASE_PROJECT_ID = 'naija-truths';
+    window.env.VITE_FIREBASE_STORAGE_BUCKET = 'naija-truths.firebasestorage.app';
+    window.env.VITE_FIREBASE_MESSAGING_SENDER_ID = '476936659655';
+    window.env.VITE_FIREBASE_APP_ID = '1:476936659655:web:0df8b9419012dac9e014e2';
+    window.env.VITE_FIREBASE_MEASUREMENT_ID = 'G-69WH8S8X8H';
+  </script>
+  <script type="module" src="main.js"></script>
+</head>
+<body>
+  <div id="preloader">
+    <div class="spinner"></div>
+  </div>
+  <header class="header">
+    <div class="logo">
+      <svg width="100" height="50" viewBox="0 0 140 70" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="ntGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#28a745;stop-opacity:1" />
+          </linearGradient>
+          <filter id="shadow">
+            <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.5"/>
+          </filter>
+        </defs>
+        <text x="10" y="50" font-family="Bebas Neue, sans-serif" font-weight="900" font-size="56" fill="url(#ntGradient)" stroke="#28a745" stroke-width="3" letter-spacing="-4" class="logo-text" filter="url(#shadow)">NT</text>
+      </svg>
+    </div>
+    <div class="header-inner">
+      <div class="header-title-wrapper">
+        <span class="site-title">Naija Truths</span>
+        <span class="site-subtitle">• Unfiltered • Unbiased • Unafraid</span>
+      </div>
+    </div>
+    <form class="search-form" role="search" action="search.html">
+      <input type="search" id="search-input" name="q" placeholder="Search articles..." aria-label="Search articles" class="search-input">
+      <button type="submit" class="search-button" aria-label="Search">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </button>
+    </form>
+    <nav class="desktop-nav" role="navigation">
+      <ul class="nav-links">
+        <li><a href="index.html" class="home-button" aria-label="Go to homepage">Home</a></li>
+        <li><a href="index.html#breaking-news">Breaking News</a></li>
+        <li class="dropdown">
+          <a href="index.html#politics" class="dropbtn" aria-haspopup="true" aria-expanded="false">Politics ▼</a>
+          <div class="dropdown-content">
+            <a href="category.html?cat=politics">All Politics</a>
+          </div>
+        </li>
+        <li><a href="index.html#fact-check">Fact-Check</a></li>
+        <li class="dropdown">
+          <a href="#" class="dropbtn" aria-haspopup="true" aria-expanded="false">More ▼</a>
+          <div class="dropdown-content">
+            <a href="category.html?cat=economy-business">Economy & Business</a>
+            <a href="category.html?cat=sports">Sports</a>
+            <a href="category.html?cat=entertainment">Entertainment</a>
+            <a href="category.html?cat=security-justice">Security & Justice</a>
+            <a href="category.html?cat=society-culture">Society & Culture</a>
+            <a href="category.html?cat=health-education">Health & Education</a>
+            <a href="category.html?cat=techlens">TechLens</a>
+            <a href="category.html?cat=investigations">Investigations</a>
+            <a href="category.html?cat=opinion-editorials">Opinion & Editorials</a>
+            <a href="category.html?cat=columns">Columns</a>
+            <a href="category.html?cat=infographics">Infographics</a>
+            <a href="category.html?cat=videos-documentaries">Videos & Documentaries</a>
+            <a href="category.html?cat=trending-stories">Trending Stories</a>
+          </div>
+        </li>
+      </ul>
+    </nav>
+    <div class="hamburger" role="button" aria-label="Toggle mobile menu" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <nav class="mobile-nav" role="navigation" tabindex="-1">
+      <ul>
+        <li><a href="index.html" class="home-button" aria-label="Go to homepage">Home</a></li>
+        <li><a href="index.html#breaking-news">Breaking News</a></li>
+        <li><a href="index.html#politics">Politics</a></li>
+        <li><a href="index.html#fact-check">Fact-Check</a></li>
+        <li><a href="category.html?cat=economy-business">Economy & Business</a></li>
+        <li><a href="category.html?cat=sports">Sports</a></li>
+        <li><a href="category.html?cat=entertainment">Entertainment</a></li>
+        <li><a href="category.html?cat=security-justice">Security & Justice</a></li>
+        <li><a href="category.html?cat=society-culture">Society & Culture</a></li>
+        <li><a href="category.html?cat=health-education">Health & Education</a></li>
+        <li><a href="category.html?cat=techlens">TechLens</a></li>
+        <li><a href="category.html?cat=investigations">Investigations</a></li>
+        <li><a href="category.html?cat=opinion-editorials">Opinion & Editorials</a></li>
+        <li><a href="category.html?cat=columns">Columns</a></li>
+        <li><a href="category.html?cat=infographics">Infographics</a></li>
+        <li><a href="category.html?cat=videos-documentaries">Videos & Documentaries</a></li>
+        <li><a href="category.html?cat=trending-stories">Trending Stories</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main>
+    <section id="article-title-section">
+      <div class="parallax-bg" style="display: none;"></div>
+      <div class="content">
+        <article class="article-card" data-id="">
+          <h2 id="article-title">Loading Article...</h2>
+          <p id="article-meta" class="article-meta">By Anonymous</p>
+          <span id="article-breaking-news" class="breaking-news-badge" style="display: none;">Breaking News</span>
+          <span id="article-verified" class="verified-badge" style="display: none;">Verified</span>
+          <div class="article-image-container">
+            <img id="article-image" 
+                 src="https://via.placeholder.com/800x400" 
+                 srcset="https://via.placeholder.com/400x200 480w, https://via.placeholder.com/800x400 768w, https://via.placeholder.com/1200x600 1200w" 
+                 sizes="(max-width: 480px) 100vw, (max-width: 768px) 80vw, 800px" 
+                 alt="Article Image" 
+                 style="display: none;" 
+                 loading="lazy" 
+                 onerror="this.src='https://via.placeholder.com/800x400'; console.warn('Article image failed to load:', this.src);">
+          </div>
+          <video id="article-video" controls style="display: none;"></video>
+          <div id="article-content">
+          </div>
+          <div class="article-actions">
+            <div class="action-wrapper">
+              <button class="like-button" aria-label="Like article">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+                <span class="action-text">Like</span>
+                <span id="like-count">0</span>
+              </button>
+            </div>
+            <div class="action-wrapper">
+              <button class="save-button" aria-label="Save article">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span class="action-text">Save</span>
+              </button>
+            </div>
+            <div class="share-buttons">
+              <span class="share-label">Share:</span>
+              <div class="action-wrapper">
+                <button class="share-button" data-platform="facebook" aria-label="Share on Facebook">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#1877F2">
+                    <path d="M22.676 0H1.324C.593 0 0 .593 0 1.324v21.352C0 23.407.593 24 1.324 24h11.494V14.708h-3.13v-3.62h3.13V8.413c0-3.1 1.893-4.788 4.658-4.788 1.325 0 2.464.099 2.796.143v3.24l-1.918.001c-1.504 0-1.794.715-1.794 1.762v2.313h3.587l-.467 3.62h-3.12V24h6.116c.73 0 1.324-.593 1.324-1.324V1.324C24 .593 23.407 0 22.676 0z"/>
+                  </svg>
+                  <span class="action-text">Facebook</span>
+                </button>
+              </div>
+              <div class="action-wrapper">
+                <button class="share-button" data-platform="x" aria-label="Share on X">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#000000">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  </svg>
+                  <span class="action-text">X</span>
+                </button>
+              </div>
+              <div class="action-wrapper">
+                <button class="share-button" data-platform="whatsapp" aria-label="Share on WhatsApp">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#25D366">
+                    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.134.561 4.139 1.54 5.88L.035 24l6.258-1.642C7.934 23.439 9.917 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm3.865 16.795c-.236.666-.874 1.093-1.828 1.396-.615.194-1.424.344-2.328-.143-1.954-.988-3.208-2.656-3.302-2.791-.094-.135-.754-1.103-.754-2.103s.472-1.496.716-1.706c.244-.21.54-.262.716-.262.176 0 .324.015.463.024.139.009.324.121.509.605.185.484.604 1.682.669 1.803.065.121.108.262.022.404-.087.141-.152.242-.302.387-.151.145-.324.324-.463.404-.139.081-.283.168-.404.272-.121.104-.248.214-.108.419.139.204.615.669 1.32 1.087.705.419 1.306.561 1.514.619.208.058.324.048.463-.058.139-.106.302-.314.431-.605.129-.291.258-.242.431-.364.173-.121.347-.145.509-.242.162-.097.248-.202.347-.323.1-.121.194-.242.302-.363.108-.121.216-.242.324-.363.108-.121.216-.242.281-.404.065-.161.108-.314.151-.445.043-.131.087-.262.022-.404-.065-.141-.302-.314-.509-.484z"/>
+                  </svg>
+                  <span class="action-text">WhatsApp</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="comment-section">
+            <h2>Comments</h2>
+            <textarea id="comment-input" placeholder="Write a comment..." aria-label="Write a comment"></textarea>
+            <button class="comment-submit" aria-label="Submit comment">Post Comment</button>
+            <div id="comment-list" role="region" aria-live="polite">
+              <p>Loading comments...</p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+  <footer class="wave-footer">
+    <div class="footer-content">
+      <div class="contact-us">
+        <h3>Contact Us</h3>
+        <div class="social-icons">
+          <a href="https://www.facebook.com/naija.truth?mibextid=rS40aB7S9Ucbxw6v" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#1877F2">
+              <path d="M22.676 0H1.324C.593 0 0 .593 0 1.324v21.352C0 23.407.593 24 1.324 24h11.494V14.708h-3.13v-3.62h3.13V8.413c0-3.1 1.893-4.788 4.658-4.788 1.325 0 2.464.099 2.796.143v3.24l-1.918.001c-1.504 0-1.794.715-1.794 1.762v2.313h3.587l-.467 3.62h-3.12V24h6.116c.73 0 1.324-.593 1.324-1.324V1.324C24 .593 23.407 0 22.676 0z"/>
+            </svg>
+          </a>
+          <a href="https://chat.whatsapp.com/GYieIfSv5tz79nIpr5WY5a" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#25D366">
+              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.134.561 4.139 1.54 5.88L.035 24l6.258-1.642C7.934 23.439 9.917 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm3.865 16.795c-.236.666-.874 1.093-1.828 1.396-.615.194-1.424.344-2.328-.143-1.954-.988-3.208-2.656-3.302-2.791-.094-.135-.754-1.103-.754-2.103s.472-1.496.716-1.706c.244-.21.54-.262.716-.262.176 0 .324.015.463.024.139.009.324.121.509.605.185.484.604 1.682.669 1.803.065.121.108.262.022.404-.087.141-.152.242-.302.387-.151.145-.324.324-.463.404-.139.081-.283.168-.404.272-.121.104-.248.214-.108.419.139.204.615.669 1.32 1.087.705.419 1.306.561 1.514.619.208.058.324.048.463-.058.139-.106.302-.314.431-.605.129-.291.258-.242.431-.364.173-.121.347-.145.509-.242.162-.097.248-.202.347-.323.1-.121.194-.242.302-.363.108-.121.216-.242.324-.363.108-.121.216-.242.281-.404.065-.161.108-.314.151-.445.043-.131.087-.262.022-.404-.065-.141-.302-.314-.509-.484z"/>
+            </svg>
+          </a>
+          <a href="https://x.com/NaijaTruths" target="_blank" rel="noopener noreferrer" aria-label="X">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#000000">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+          </a>
+          <a href="tel:+2347039813110" aria-label="Phone">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+          </a>
+          <a href="mailto:truthngr@gmail.com" aria-label="Email">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+      <p class="footer-copy">© 2025 Naija Truths. All rights reserved.</p>
+    </div>
+  </footer>
+  <div class="scroll-to-top-wrapper">
+    <button class="scroll-to-top ripple-btn" aria-label="Scroll to top">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2">
+        <path d="M4 12l8-8 8 8M12 20V4"/>
+      </svg>
+    </button>
+  </div>
+</body>
+</html>

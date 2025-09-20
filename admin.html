@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Naija Truths - Admin Dashboard">
+  <meta name="keywords" content="Naija Truths, Admin, Dashboard">
+  <meta name="author" content="Naija Truths Team">
+  <meta property="og:title" content="Naija Truths - Admin Dashboard">
+  <meta property="og:description" content="Admin dashboard for managing Naija Truths content.">
+  <meta property="og:image" content="https://via.placeholder.com/1200x630">
+  <meta property="og:url" content="https://naija-truths.netlify.app/admin.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@NaijaTruths">
+  <title>Naija Truths - Admin Dashboard</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&family=Bebas+Neue&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css">
+  <link rel="stylesheet" href="main.css">
+  <script type="module" src="https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js"></script>
+  <script>
+    window.env = window.env || {};
+    window.env.VITE_FIREBASE_API_KEY = 'AIzaSyDrzSgCHn53kfa4dJJVJhDD717v8SPozR0';
+    window.env.VITE_FIREBASE_AUTH_DOMAIN = 'naija-truths.firebaseapp.com';
+    window.env.VITE_FIREBASE_PROJECT_ID = 'naija-truths';
+    window.env.VITE_FIREBASE_STORAGE_BUCKET = 'naija-truths.firebasestorage.app';
+    window.env.VITE_FIREBASE_MESSAGING_SENDER_ID = '476936659655';
+    window.env.VITE_FIREBASE_APP_ID = '1:476936659655:web:0df8b9419012dac9e014e2';
+    window.env.VITE_FIREBASE_MEASUREMENT_ID = 'G-69WH8S8X8H';
+  </script>
+  <script type="module" src="main.js"></script>
+</head>
+<body>
+  <div id="preloader">
+    <div class="spinner"></div>
+  </div>
+  <header class="header admin-header">
+    <div class="logo">
+      <svg width="100" height="50" viewBox="0 0 140 70" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="ntGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#28a745;stop-opacity:1" />
+          </linearGradient>
+          <filter id="shadow">
+            <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.5"/>
+          </filter>
+        </defs>
+        <text x="10" y="50" font-family="Bebas Neue, sans-serif" font-weight="900" font-size="56" fill="url(#ntGradient)" stroke="#28a745" stroke-width="3" letter-spacing="-4" class="logo-text" filter="url(#shadow)">NT</text>
+      </svg>
+    </div>
+    <div class="header-inner">
+      <div class="header-title-wrapper">
+        <span class="site-title">Naija Truths Admin</span>
+        <span class="site-subtitle">• Dashboard • Manage Content</span>
+      </div>
+    </div>
+    <button id="logout-button" style="display: none;">Logout</button>
+  </header>
+  <main>
+    <div class="admin-container">
+      <section class="admin-section">
+        <div class="content" id="admin-content" style="display: none;">
+          <h2>Admin Dashboard</h2>
+          <h2>Create/Edit Article</h2>
+          <form id="article-form" class="admin-form">
+            <input type="hidden" id="article-id">
+            <label for="article-title-input">Title:</label>
+            <input type="text" id="article-title-input" required>
+            <label for="article-writer-input">Writer Name:</label>
+            <input type="text" id="article-writer-input" placeholder="Enter writer's name (optional)">
+            <label for="article-summary-input">Summary:</label>
+            <textarea id="article-summary-input"></textarea>
+            <label for="article-content-input">Content:</label>
+            <div id="article-content-input" class="quill-editor"></div>
+            <label for="article-image-input">Image URL:</label>
+            <input type="url" id="article-image-input">
+            <label for="article-video-input">Video URL:</label>
+            <input type="url" id="article-video-input">
+            <label for="article-category-input">Category:</label>
+            <select id="article-category-input" required>
+              <option value="">Select Category</option>
+              <option value="politics">Politics</option>
+              <option value="fact-check">Fact-Check</option>
+              <option value="economy-business">Economy & Business</option>
+              <option value="sports">Sports</option>
+              <option value="entertainment">Entertainment</option>
+              <option value="security-justice">Security & Justice</option>
+              <option value="society-culture">Society & Culture</option>
+              <option value="health-education">Health & Education</option>
+              <option value="techlens">TechLens</option>
+              <option value="investigations">Investigations</option>
+              <option value="opinion-editorials">Opinion & Editorials</option>
+              <option value="columns">Columns</option>
+              <option value="infographics">Infographics</option>
+              <option value="videos-documentaries">Videos & Documentaries</option>
+            </select>
+            <label for="article-breaking-news-input" style="font-weight: bold; color: #ff4500;">Mark as Breaking News:</label>
+            <input type="checkbox" id="article-breaking-news-input" style="margin-bottom: 1rem;">
+            <label for="article-verified-input" style="font-weight: bold; color: #28a745;">Mark as Verified:</label>
+            <input type="checkbox" id="article-verified-input" style="margin-bottom: 1rem;">
+            <div class="form-actions">
+              <button type="submit">Publish Article</button>
+              <button type="button" id="preview-button">Preview</button>
+              <button type="button" id="clear-button">Clear</button>
+            </div>
+          </form>
+          <div id="preview-section" class="preview-container" style="display: none;">
+            <h2>Preview</h2>
+            <article class="article-card premium-preview">
+              <h1 id="preview-title"></h1>
+              <p id="preview-writer" class="premium-writer"></p>
+              <p id="preview-category"></p>
+              <span id="preview-breaking-news" class="breaking-news-badge" style="display: none;">Breaking News</span>
+              <span id="preview-verified" class="verified-badge" style="display: none;">Verified</span>
+              <p id="preview-date"></p>
+              <img id="preview-image" src="" alt="Preview Image" style="display: none;" loading="lazy">
+              <video id="preview-video" controls style="display: none;"></video>
+              <p id="preview-summary"></p>
+              <div id="preview-content"></div>
+            </article>
+          </div>
+          <h2>Existing Articles</h2>
+          <div class="search-bar">
+            <label for="article-search-input">Search Articles:</label>
+            <input type="text" id="article-search-input" placeholder="Enter title or date (YYYY-MM-DD)">
+            <button type="button" id="article-search-button">Search</button>
+            <button type="button" id="article-search-clear">Clear Search</button>
+          </div>
+          <div id="article-list" class="article-grid" role="region" aria-live="polite">
+            <p>Loading articles...</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <div class="scroll-to-top-wrapper">
+    <button class="scroll-to-top ripple-btn" aria-label="Scroll to top">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2">
+        <path d="M4 12l8-8 8 8M12 20V4"/>
+      </svg>
+    </button>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+</body>
+</html>

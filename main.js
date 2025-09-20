@@ -186,13 +186,14 @@ async function loadArticles() {
               img.src = '';
               img.src = imageUrl;
               img.alt = article.title || 'Article Image';
-              img.srcset = `${imageUrl} 400w, ${imageUrl} 200w`;
-              img.sizes = '(max-width: 767px) 200px, 400px';
+              img.srcset = `${imageUrl} 400w, ${imageUrl} 200w, ${imageUrl} 800w`;
+              img.sizes = '(max-width: 480px) 100vw, (max-width: 767px) 80vw, 400px';
+              img.loading = 'lazy';
               img.onerror = () => {
                 console.warn(`Fallback image failed to load for article ID: ${docId}, URL: ${imageUrl}`);
                 img.src = 'https://via.placeholder.com/400x200';
                 img.srcset = 'https://via.placeholder.com/400x200 400w, https://via.placeholder.com/200x100 200w';
-                img.sizes = '(max-width: 767px) 200px, 400px';
+                img.sizes = '(max-width: 480px) 100vw, (max-width: 767px) 80vw, 400px';
               };
               img.onload = () => {
                 console.log(`Fallback image loaded successfully for article ID: ${docId}, URL: ${img.src}`);
@@ -245,13 +246,14 @@ async function loadArticles() {
           img.src = '';
           img.src = imageUrl;
           img.alt = article.title || 'Article Image';
-          img.srcset = `${imageUrl} 400w, ${imageUrl} 200w`;
-          img.sizes = '(max-width: 767px) 200px, 400px';
+          img.srcset = `${imageUrl} 400w, ${imageUrl} 200w, ${imageUrl} 800w`;
+          img.sizes = '(max-width: 480px) 100vw, (max-width: 767px) 80vw, 400px';
+          img.loading = 'lazy';
           img.onerror = () => {
             console.warn(`Image failed to load for article ID: ${doc.id}, URL: ${imageUrl}`);
             img.src = 'https://via.placeholder.com/400x200';
             img.srcset = 'https://via.placeholder.com/400x200 400w, https://via.placeholder.com/200x100 200w';
-            img.sizes = '(max-width: 767px) 200px, 400px';
+            img.sizes = '(max-width: 480px) 100vw, (max-width: 767px) 80vw, 400px';
           };
           img.onload = () => {
             console.log(`Image loaded successfully for article ID: ${doc.id}, URL: ${img.src}`);
@@ -338,7 +340,6 @@ async function loadArticles() {
     console.error('Error updating meta tags:', error.message);
   }
 }
-
 // Load politics articles
 async function loadPoliticsArticles() {
   const politicsArticles = document.getElementById('politics-articles');
@@ -385,11 +386,11 @@ async function fetchPoliticsArticles(reset = false) {
       articleElement.innerHTML = `
         <a href="article.html?id=${doc.id}" class="article-link">
           <img src="${imageUrl}" 
-               srcset="${imageUrl} 400w, ${imageUrl} 200w" 
-               sizes="(max-width: 767px) 200px, 400px" 
+               srcset="${imageUrl} 400w, ${imageUrl} 200w, ${imageUrl} 800w" 
+               sizes="(max-width: 480px) 100vw, (max-width: 767px) 80vw, 400px" 
                alt="${article.title || 'Article Image'}" 
                loading="lazy"
-               onerror="this.src='https://via.placeholder.com/400x200'; this.srcset='https://via.placeholder.com/400x200 400w, https://via.placeholder.com/200x100 200w'; this.sizes='(max-width: 767px) 200px, 400px';">
+               onerror="this.src='https://via.placeholder.com/400x200'; this.srcset='https://via.placeholder.com/400x200 400w, https://via.placeholder.com/200x100 200w'; this.sizes='(max-width: 480px) 100vw, (max-width: 767px) 80vw, 400px';">
           <h3>${article.title || 'Untitled Article'}</h3>
           <p class="article-writer premium-writer">By ${article.writer || 'Anonymous'}</p>
           <p>${article.summary || (article.content ? article.content.substring(0, 100) + '...' : 'No summary available')}</p>
@@ -462,11 +463,11 @@ async function fetchLatestNewsArticles(reset = false, loadMoreButton, category =
       articleElement.innerHTML = `
         <a href="article.html?id=${doc.id}" class="article-link">
           <img src="${imageUrl}" 
-               srcset="${imageUrl} 400w, ${imageUrl} 200w" 
-               sizes="(max-width: 767px) 200px, 400px" 
+               srcset="${imageUrl} 400w, ${imageUrl} 200w, ${imageUrl} 800w" 
+               sizes="(max-width: 480px) 100vw, (max-width: 767px) 80vw, 400px" 
                alt="${article.title || 'Article Image'}" 
                loading="lazy"
-               onerror="this.src='https://via.placeholder.com/400x200'; this.srcset='https://via.placeholder.com/400x200 400w, https://via.placeholder.com/200x100 200w'; this.sizes='(max-width: 767px) 200px, 400px';">
+               onerror="this.src='https://via.placeholder.com/400x200'; this.srcset='https://via.placeholder.com/400x200 400w, https://via.placeholder.com/200x100 200w'; this.sizes='(max-width: 480px) 100vw, (max-width: 767px) 80vw, 400px';">
           <h3>${article.title || 'Untitled Article'}</h3>
           <p class="article-writer premium-writer">By ${article.writer || 'Anonymous'}</p>
           <p>${article.summary || (article.content ? article.content.substring(0, 100) + '...' : 'No summary available')}</p>
@@ -485,6 +486,7 @@ async function fetchLatestNewsArticles(reset = false, loadMoreButton, category =
     displayErrorMessage('#latest-news-articles', 'Failed to load articles. Please try again.');
   }
 }
+
 // Load category articles
 async function loadCategoryArticles() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -571,11 +573,11 @@ async function fetchCategoryArticles(category, reset = false) {
       articleElement.innerHTML = `
         <a href="article.html?id=${doc.id}" class="article-link">
           <img src="${imageUrl}" 
-               srcset="${imageUrl} 400w, ${imageUrl} 200w" 
-               sizes="(max-width: 767px) 200px, 400px" 
+               srcset="${imageUrl} 400w, ${imageUrl} 200w, ${imageUrl} 800w" 
+               sizes="(max-width: 480px) 100vw, (max-width: 767px) 80vw, 400px" 
                alt="${article.title || 'Article Image'}" 
                loading="lazy"
-               onerror="this.src='https://via.placeholder.com/400x200'; this.srcset='https://via.placeholder.com/400x200 400w, https://via.placeholder.com/200x100 200w'; this.sizes='(max-width: 767px) 200px, 400px';">
+               onerror="this.src='https://via.placeholder.com/400x200'; this.srcset='https://via.placeholder.com/400x200 400w, https://via.placeholder.com/200x100 200w'; this.sizes='(max-width: 480px) 100vw, (max-width: 767px) 80vw, 400px';">
           <h3>${article.title || 'Untitled Article'}</h3>
           <p class="article-writer premium-writer">By ${article.writer || 'Anonymous'}</p>
           <p>${article.summary || (article.content ? article.content.substring(0, 100) + '...' : 'No summary available')}</p>
@@ -656,6 +658,7 @@ async function loadArticle() {
           articleImage.srcset = `${article.image} 1200w, ${article.image} 768w, ${article.image} 480w`;
           articleImage.sizes = '(max-width: 480px) 100vw, (max-width: 768px) 80vw, 800px';
           articleImage.alt = article.title || 'Article Image';
+          articleImage.loading = 'lazy';
           articleImage.style.display = 'block';
           articleImage.onerror = () => {
             console.warn(`Article image failed to load for ID: ${articleId}, URL: ${article.image}`);
@@ -669,6 +672,7 @@ async function loadArticle() {
           articleImage.srcset = 'https://via.placeholder.com/400x200 480w, https://via.placeholder.com/800x400 768w, https://via.placeholder.com/1200x600 1200w';
           articleImage.sizes = '(max-width: 480px) 100vw, (max-width: 768px) 80vw, 800px';
           articleImage.alt = 'Article Image';
+          articleImage.loading = 'lazy';
           articleImage.style.display = 'block';
         }
       } else {
@@ -845,11 +849,11 @@ async function loadSearchResults() {
       articleElement.innerHTML = `
         <a href="article.html?id=${doc.id}" class="article-link">
           <img src="${article.image && isValidUrl(article.image) ? article.image : 'https://via.placeholder.com/400x200'}" 
-               srcset="${article.image && isValidUrl(article.image) ? `${article.image} 400w, ${article.image} 200w` : 'https://via.placeholder.com/400x200 400w, https://via.placeholder.com/200x100 200w'}" 
-               sizes="(max-width: 767px) 200px, 400px" 
+               srcset="${article.image && isValidUrl(article.image) ? `${article.image} 400w, ${article.image} 200w, ${article.image} 800w` : 'https://via.placeholder.com/400x200 400w, https://via.placeholder.com/200x100 200w'}" 
+               sizes="(max-width: 480px) 100vw, (max-width: 767px) 80vw, 400px" 
                alt="${article.title || 'Article Image'}" 
                loading="lazy"
-               onerror="this.src='https://via.placeholder.com/400x200'; this.srcset='https://via.placeholder.com/400x200 400w, https://via.placeholder.com/200x100 200w'; this.sizes='(max-width: 767px) 200px, 400px';">
+               onerror="this.src='https://via.placeholder.com/400x200'; this.srcset='https://via.placeholder.com/400x200 400w, https://via.placeholder.com/200x100 200w'; this.sizes='(max-width: 480px) 100vw, (max-width: 767px) 80vw, 400px';">
           <h3>${article.title || 'Untitled Article'}</h3>
           <p class="article-writer premium-writer">By ${article.writer || 'Anonymous'}</p>
           <p>${article.summary || (article.content ? article.content.substring(0, 100) + '...' : 'No summary available')}</p>
@@ -1030,6 +1034,7 @@ if (previewButton) {
       previewImage.src = image;
       previewImage.srcset = `${image} 1200w, ${image} 768w, ${image} 480w`;
       previewImage.sizes = '(max-width: 480px) 100vw, (max-width: 768px) 80vw, 800px';
+      previewImage.loading = 'lazy';
       previewImage.style.display = 'block';
     } else {
       previewImage.style.display = 'none';

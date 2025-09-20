@@ -39,6 +39,7 @@ body {
     width: auto;
     max-width: 90%;
     z-index: 3;
+    text-align: center;
 }
 
 .logo {
@@ -46,7 +47,7 @@ body {
     align-items: center;
     gap: 0.5rem;
     flex-shrink: 0;
-    z-index: 2;
+    z-index: 4;
 }
 
 .header-title-wrapper {
@@ -235,6 +236,7 @@ body {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     z-index: 1;
     border-radius: 5px;
+    right: 0;
 }
 
 .dropdown-content a {
@@ -1851,7 +1853,8 @@ main h3 {
 
     .search-form {
         margin-right: auto;
-        margin-left: 2rem;
+        margin-left: 1rem;
+        max-width: 160px;
     }
 
     .desktop-nav {
@@ -1972,7 +1975,11 @@ main h3 {
 }
 
 @media (min-width: 992px) {
-    /* Admin-Specific Responsive */
+    .search-form {
+        max-width: 160px;
+        margin-left: 1rem;
+    }
+
     .admin-container {
         padding: 2rem;
     }

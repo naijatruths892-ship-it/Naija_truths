@@ -491,19 +491,12 @@ main h3 {
 .fact-check-card {
     display: flex;
     flex-direction: column;
-    min-height: 350px; /* Ensure consistent height */
-}
-
-.fact-check-card .image-wrapper {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 16 / 9; /* Consistent image proportions */
-    overflow: hidden;
+    min-height: 400px; /* Match Politics and Latest News */
 }
 
 .fact-check-card img {
     width: 100%;
-    height: 100%;
+    height: 200px; /* Match .news-card img height */
     object-fit: cover;
     object-position: center;
     display: block;
@@ -534,7 +527,7 @@ main h3 {
 /* Verified Badge */
 .verified-badge {
     position: absolute;
-    bottom: 10px;
+    top: 10px; /* Position at top-right to match breaking-news-badge placement */
     right: 10px;
     background: linear-gradient(90deg, #1e90ff 0%, #00b7eb 100%) padding-box;
     color: #fff;
@@ -1481,7 +1474,6 @@ main h3 {
 .ql-editor {
     min-height: 200px;
     font-family: 'Poppins', sans-serif;
-    font-sizeორვ
     font-size: 1rem;
     line-height: 1.6;
     color: #333;
@@ -1686,27 +1678,27 @@ main h3 {
         grid-template-columns: 1fr;
     }
 
+    .news-card,
     .fact-check-card {
-        min-height: 300px; /* Adjusted for mobile */
+        min-height: 350px; /* Consistent height for mobile */
     }
 
-    .fact-check-card .image-wrapper {
-        aspect-ratio: 16 / 9;
-        height: auto;
-    }
-
+    .news-card img,
     .fact-check-card img {
-        height: 100%;
+        height: 150px; /* Adjusted for mobile */
     }
 
+    .news-card h3,
     .fact-check-card h3 {
         font-size: 1.3rem;
     }
 
+    .news-card p,
     .fact-check-card p {
         font-size: 0.9rem;
     }
 
+    .news-card .article-time,
     .fact-check-card .article-time {
         font-size: 0.8rem;
     }
@@ -1714,7 +1706,7 @@ main h3 {
     .verified-badge {
         font-size: 0.7rem;
         padding: 0.2rem 0.4rem;
-        bottom: 8px;
+        top: 8px;
         right: 8px;
     }
 
@@ -1920,27 +1912,27 @@ main h3 {
         grid-template-columns: repeat(2, 1fr);
     }
 
+    .news-card,
     .fact-check-card {
-        min-height: 320px; /* Adjusted for tablet */
+        min-height: 380px; /* Consistent height for tablet */
     }
 
-    .fact-check-card .image-wrapper {
-        aspect-ratio: 16 / 9;
-        height: auto;
-    }
-
+    .news-card img,
     .fact-check-card img {
-        height: 100%;
+        height: 180px; /* Adjusted for tablet */
     }
 
+    .news-card h3,
     .fact-check-card h3 {
         font-size: 1.4rem;
     }
 
+    .news-card p,
     .fact-check-card p {
         font-size: 0.95rem;
     }
 
+    .news-card .article-time,
     .fact-check-card .article-time {
         font-size: 0.85rem;
     }
@@ -1948,7 +1940,7 @@ main h3 {
     .verified-badge {
         font-size: 0.75rem;
         padding: 0.25rem 0.5rem;
-        bottom: 8px;
+        top: 8px;
         right: 8px;
     }
 
@@ -2069,17 +2061,14 @@ main h3 {
         gap: 1rem;
     }
 
+    .news-card,
     .fact-check-card {
-        min-height: 350px;
+        min-height: 400px;
     }
 
-    .fact-check-card .image-wrapper {
-        aspect-ratio: 16 / 9;
-        height: auto;
-    }
-
+    .news-card img,
     .fact-check-card img {
-        height: 100%;
+        height: 200px;
     }
 
     .admin-container {

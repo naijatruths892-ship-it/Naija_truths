@@ -340,6 +340,7 @@ async function loadArticles() {
     console.error('Error updating meta tags:', error.message);
   }
 }
+
 // Load politics articles
 async function loadPoliticsArticles() {
   const politicsArticles = document.getElementById('politics-articles');
@@ -463,6 +464,7 @@ async function fetchLatestNewsArticles(reset = false, loadMoreButton, category =
       articleElement.innerHTML = `
         <a href="article.html?id=${doc.id}" class="article-link">
           <img src="${imageUrl}" 
+               srcset="${imageUrl} {mg src="${imageUrl}" 
                srcset="${imageUrl} 400w, ${imageUrl} 200w, ${imageUrl} 800w" 
                sizes="(max-width: 480px) 100vw, (max-width: 767px) 80vw, 400px" 
                alt="${article.title || 'Article Image'}" 
@@ -711,6 +713,17 @@ async function loadArticle() {
 
       articleCard.dataset.id = articleId;
       likeCount.textContent = article.likes || 0;
+
+      // Initialize save button state for anonymous users
+      const saveButton = document.querySelector('.save-button');
+      if (saveButton) {
+        const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
+        if (savedArticles.includes(articleId)) {
+          saveButton.classList.add('saved');
+          saveButton.querySelector('.action-text').textContent = 'Saved';
+          saveButton.disabled = true;
+        }
+      }
 
       await withRetry(() => updateDoc(docRef, { views: increment(1) }));
       loadComments(articleId);
@@ -1287,29 +1300,45 @@ async function searchAdminArticles() {
     displayErrorMessage('#article-list', errorMessage);
   }
 }
-
 // Like button
 document.querySelectorAll('.like-button').forEach(button => {
   button.addEventListener('click', async () => {
-    if (!auth.currentUser) {
-      displayErrorMessage('.article-card', 'Please log in to like articles.');
+    const articleId = button.closest('.article-card')?.dataset.id;
+    const likeCountSpan = button.querySelector('#like-count');
+    if (!articleId || !likeCountSpan) {
+      console.error('Article ID or like count element not found');
+      displayErrorMessage('.article-card', 'Unable to like article: Page elements missing.');
       return;
     }
-    const likeCountSpan = button.querySelector('#like-count');
+
+    // Check if article is already liked in localStorage
+    const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
+    if (likedArticles.includes(articleId)) {
+      displayErrorMessage('.article-card', 'You have already liked this article.');
+      return;
+    }
+
     let count = parseInt(likeCountSpan.textContent) || 0;
     likeCountSpan.textContent = count + 1;
     button.classList.add('liked');
     button.disabled = true;
-    const articleId = button.closest('.article-card')?.dataset.id;
-    if (db && articleId) {
+
+    // Store like in localStorage
+    likedArticles.push(articleId);
+    localStorage.setItem('likedArticles', JSON.stringify(likedArticles));
+
+    if (db) {
       try {
         await withRetry(() => updateDoc(doc(db, 'articles', articleId), { likes: increment(1) }));
+        console.log(`Like recorded for article ID: ${articleId}`);
       } catch (error) {
-        console.error('Error updating likes:', error.message);
+        console.error('Error updating likes in Firestore:', error.message);
         displayErrorMessage('.article-card', 'Failed to update likes. Please try again.');
         likeCountSpan.textContent = count;
         button.classList.remove('liked');
         button.disabled = false;
+        // Remove from localStorage if Firestore update fails
+        localStorage.setItem('likedArticles', JSON.stringify(likedArticles.filter(id => id !== articleId)));
       }
     }
   });
@@ -1319,26 +1348,29 @@ document.querySelectorAll('.like-button').forEach(button => {
 document.querySelectorAll('.comment-submit').forEach(button => {
   button.addEventListener('click', async (e) => {
     e.preventDefault();
-    if (!auth.currentUser) {
-      displayErrorMessage('#comment-list', 'Please log in to comment.');
+    const commentInput = document.getElementById('comment-input');
+    const articleId = document.querySelector('.article-card')?.dataset.id;
+    if (!commentInput || !articleId) {
+      console.error('Comment input or article ID not found');
+      displayErrorMessage('#comment-list', 'Unable to post comment: Page elements missing.');
       return;
     }
-    const commentInput = document.getElementById('comment-input');
-    if (commentInput?.value) {
-      const articleId = document.querySelector('.article-card')?.dataset.id;
-      if (db && articleId) {
-        try {
-          await withRetry(() => addDoc(collection(db, 'articles', articleId, 'comments'), {
-            text: commentInput.value,
-            timestamp: serverTimestamp(),
-            userId: auth.currentUser.uid
-          }));
-          commentInput.value = '';
-          loadComments(articleId);
-        } catch (error) {
-          console.error('Error adding comment:', error.message);
-          displayErrorMessage('#comment-list', 'Failed to post comment. Please try again.');
-        }
+    if (!commentInput.value) {
+      displayErrorMessage('#comment-list', 'Comment cannot be empty.');
+      return;
+    }
+    if (db) {
+      try {
+        await withRetry(() => addDoc(collection(db, 'articles', articleId, 'comments'), {
+          text: commentInput.value,
+          timestamp: serverTimestamp()
+        }));
+        commentInput.value = '';
+        loadComments(articleId);
+        console.log(`Comment added for article ID: ${articleId}`);
+      } catch (error) {
+        console.error('Error adding comment:', error.message);
+        displayErrorMessage('#comment-list', 'Failed to post comment. Please try again.');
       }
     }
   });
@@ -1346,26 +1378,26 @@ document.querySelectorAll('.comment-submit').forEach(button => {
 
 // Save article
 document.querySelectorAll('.save-button').forEach(button => {
-  button.addEventListener('click', async () => {
-    if (!auth.currentUser) {
-      displayErrorMessage('.article-card', 'Please log in to save articles.');
+  button.addEventListener('click', () => {
+    const articleId = button.closest('.article-card')?.dataset.id;
+    if (!articleId) {
+      console.error('Article ID not found for save action');
+      displayErrorMessage('.article-card', 'Unable to save article: Article ID missing.');
       return;
     }
-    const articleId = button.closest('.article-card')?.dataset.id;
-    if (db && articleId) {
-      try {
-        await withRetry(() => addDoc(collection(db, 'users', auth.currentUser.uid, 'savedArticles'), {
-          articleId,
-          savedAt: serverTimestamp()
-        }));
-        button.classList.add('saved');
-        button.textContent = 'Saved';
-        button.disabled = true;
-      } catch (error) {
-        console.error('Error saving article:', error.message);
-        displayErrorMessage('.article-card', 'Failed to save article. Please try again.');
-      }
+
+    const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
+    if (savedArticles.includes(articleId)) {
+      displayErrorMessage('.article-card', 'This article is already saved.');
+      return;
     }
+
+    savedArticles.push(articleId);
+    localStorage.setItem('savedArticles', JSON.stringify(savedArticles));
+    button.classList.add('saved');
+    button.querySelector('.action-text').textContent = 'Saved';
+    button.disabled = true;
+    console.log(`Article saved locally: ${articleId}`);
   });
 });
 
@@ -1623,6 +1655,31 @@ document.addEventListener('DOMContentLoaded', () => {
         loadSearchResults();
       }
       loadArticles();
+
+      // Initialize save button states for all articles
+      document.querySelectorAll('.save-button').forEach(button => {
+        const articleId = button.closest('.article-card')?.dataset.id;
+        if (articleId) {
+          const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
+          if (savedArticles.includes(articleId)) {
+            button.classList.add('saved');
+            button.querySelector('.action-text').textContent = 'Saved';
+            button.disabled = true;
+          }
+        }
+      });
+
+      // Initialize like button states for all articles
+      document.querySelectorAll('.like-button').forEach(button => {
+        const articleId = button.closest('.article-card')?.dataset.id;
+        if (articleId) {
+          const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
+          if (likedArticles.includes(articleId)) {
+            button.classList.add('liked');
+            button.disabled = true;
+          }
+        }
+      });
     }
     const preloader = document.getElementById('preloader');
     if (preloader) {

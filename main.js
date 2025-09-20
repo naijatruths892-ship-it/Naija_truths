@@ -40,8 +40,12 @@ async function initializeFirebase() {
 
 // Display error messages
 function displayErrorMessage(selector, message) {
-  const element = document.querySelector(selector);
-  if (element) {
+  const elements = document.querySelectorAll(selector);
+  if (elements.length === 0) {
+    console.warn(`No elements found for selector: ${selector}`);
+    return;
+  }
+  elements.forEach(element => {
     const errorDiv = document.createElement('div');
     errorDiv.classList.add('error-message');
     errorDiv.innerHTML = `
@@ -50,7 +54,7 @@ function displayErrorMessage(selector, message) {
     `;
     element.appendChild(errorDiv);
     errorDiv.querySelector('.dismiss-error').addEventListener('click', () => errorDiv.remove());
-  }
+  });
 }
 
 // Retry logic for Firebase operations
@@ -341,6 +345,275 @@ async function loadArticles() {
   }
 }
 
+// Load individual article
+async function loadArticle() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const articleId = urlParams.get('id');
+  console.log('Attempting to load article with ID:', articleId);
+  if (!db) {
+    console.error('Database not initialized');
+    displayErrorMessage('#article-content', 'Unable to load article: Database not initialized. Please check your Firebase configuration or internet connection.');
+    return;
+  }
+  if (!articleId) {
+    console.error('No article ID provided in URL');
+    displayErrorMessage('#article-content', 'No article ID provided in the URL. Please select an article from the homepage or check the link.');
+    return;
+  }
+
+  const docRef = doc(db, 'articles', articleId);
+  try {
+    const docSnap = await withRetry(() => getDoc(docRef));
+    if (docSnap.exists()) {
+      const article = docSnap.data();
+      console.log('Article loaded successfully:', article.title, 'Verified:', article.verified, 'Breaking News:', article.breakingNews, 'Image:', article.image);
+
+      const articleTitle = document.getElementById('article-title');
+      const articleMeta = document.getElementById('article-meta');
+      const articleImage = document.getElementById('article-image');
+      const articleVideo = document.getElementById('article-video');
+      const articleBreakingNews = document.getElementById('article-breaking-news');
+      const articleVerified = document.getElementById('article-verified');
+      const articleContent = document.getElementById('article-content');
+      const articleCard = document.querySelector('.article-card');
+      const likeCount = document.getElementById('like-count');
+
+      if (!articleTitle || !articleMeta || !articleContent || !articleCard || !likeCount) {
+        console.error('One or more required DOM elements are missing:', {
+          articleTitle: !!articleTitle,
+          articleMeta: !!articleMeta,
+          articleContent: !!articleContent,
+          articleCard: !!articleCard,
+          likeCount: !!likeCount
+        });
+        displayErrorMessage('#article-content', 'Failed to load article: Page elements are missing. Please check the HTML structure of article.html.');
+        return;
+      }
+
+      articleTitle.textContent = article.title || 'Untitled Article';
+      document.querySelector('meta[property="og:title"]').setAttribute('content', article.title || 'Naija Truths Article');
+      document.querySelector('meta[name="description"]').setAttribute('content', article.summary || (article.content ? article.content.substring(0, 160) : 'Article from Naija Truths'));
+      document.querySelector('meta[property="og:description"]').setAttribute('content', article.summary || (article.content ? article.content.substring(0, 160) : 'Article from Naija Truths'));
+      const imageUrl = article.image && isValidUrl(article.image) ? article.image : 'https://via.placeholder.com/1200x630';
+      document.querySelector('meta[property="og:image"]').setAttribute('content', imageUrl);
+      document.title = `Naija Truths - ${article.title || 'Article'}`;
+
+      if (articleImage) {
+        if (article.image && isValidUrl(article.image)) {
+          articleImage.src = article.image;
+          articleImage.srcset = `${article.image} 1200w, ${article.image} 768w, ${article.image} 480w`;
+          articleImage.sizes = '(max-width: 480px) 100vw, (max-width: 768px) 80vw, 800px';
+          articleImage.alt = article.title || 'Article Image';
+          articleImage.loading = 'lazy';
+          articleImage.style.display = 'block';
+          articleImage.onerror = () => {
+            console.warn(`Article image failed to load for ID: ${articleId}, URL: ${article.image}`);
+            articleImage.src = 'https://via.placeholder.com/800x400';
+            articleImage.srcset = 'https://via.placeholder.com/400x200 480w, https://via.placeholder.com/800x400 768w, https://via.placeholder.com/1200x600 1200w';
+            articleImage.sizes = '(max-width: 480px) 100vw, (max-width: 768px) 80vw, 800px';
+            articleImage.style.display = 'block';
+          };
+        } else {
+          articleImage.src = 'https://via.placeholder.com/800x400';
+          articleImage.srcset = 'https://via.placeholder.com/400x200 480w, https://via.placeholder.com/800x400 768w, https://via.placeholder.com/1200x600 1200w';
+          articleImage.sizes = '(max-width: 480px) 100vw, (max-width: 768px) 80vw, 800px';
+          articleImage.alt = 'Article Image';
+          articleImage.loading = 'lazy';
+          articleImage.style.display = 'block';
+        }
+      } else {
+        console.warn('Article image element not found');
+      }
+
+      articleMeta.textContent = `By ${article.writer || 'Anonymous'} on ${formatTimestamp(article.createdAt)}`;
+      articleMeta.classList.add('premium-writer');
+
+      if (articleContent) {
+        articleContent.innerHTML = article.content || 'No content available';
+      }
+
+      if (articleVideo) {
+        if (article.video && isValidUrl(article.video)) {
+          articleVideo.src = article.video;
+          articleVideo.style.display = 'block';
+        } else {
+          articleVideo.style.display = 'none';
+        }
+      } else {
+        console.warn('Article video element not found');
+      }
+
+      if (articleBreakingNews) {
+        articleBreakingNews.style.display = article.breakingNews ? 'block' : 'none';
+      } else {
+        console.warn('Breaking news badge element not found');
+      }
+
+      if (articleVerified) {
+        articleVerified.style.display = article.verified ? 'block' : 'none';
+      } else {
+        console.warn('Verified badge element not found');
+      }
+
+      articleCard.dataset.id = articleId;
+      likeCount.textContent = article.likes || 0;
+
+      // Initialize save and like button states for anonymous users
+      const saveButton = document.querySelector('.save-button');
+      if (saveButton) {
+        const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
+        if (savedArticles.includes(articleId)) {
+          saveButton.classList.add('saved');
+          saveButton.querySelector('.action-text').textContent = 'Saved';
+          saveButton.disabled = true;
+        }
+      }
+
+      const likeButton = document.querySelector('.like-button');
+      if (likeButton) {
+        const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
+        if (likedArticles.includes(articleId)) {
+          likeButton.classList.add('liked');
+          likeButton.disabled = true;
+        }
+      }
+
+      await withRetry(() => updateDoc(docRef, { views: increment(1) }));
+      loadComments(articleId);
+    } else {
+      console.error('Article not found in Firestore for ID:', articleId);
+      displayErrorMessage('#article-content', `Article not found (ID: ${articleId}). It may have been deleted or the ID is incorrect.`);
+    }
+  } catch (error) {
+    console.error('Error loading article (ID:', articleId, '):', error.message, error.code);
+    let errorMessage = `Failed to load article (ID: ${articleId}): ${error.message}. `;
+    if (error.code === 'permission-denied') {
+      errorMessage += 'Check Firestore security rules to ensure public read access to the "articles" collection.';
+    } else if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
+      errorMessage += 'Network issue detected. Check your internet connection and try again.';
+    } else {
+      errorMessage += 'Check Firestore for the article or try refreshing the page.';
+    }
+    displayErrorMessage('#article-content', errorMessage);
+  }
+}
+
+// Like button
+document.querySelectorAll('.like-button').forEach(button => {
+  button.addEventListener('click', async () => {
+    const parentCard = button.closest('.article-card, .news-card');
+    const articleId = parentCard?.dataset.id;
+    const likeCountSpan = button.querySelector('#like-count');
+
+    if (!parentCard) {
+      console.error('Like button is not inside an .article-card or .news-card element');
+      displayErrorMessage('.article-actions, #latest-news-articles, #politics-articles, #category-articles, #search-results', 'Unable to like article: Article container missing.');
+      return;
+    }
+    if (!articleId) {
+      console.error('Article ID is missing or empty in .article-card or .news-card');
+      displayErrorMessage('.article-actions, #latest-news-articles, #politics-articles, #category-articles, #search-results', 'Unable to like article: Article ID not found. Ensure the article loaded correctly.');
+      return;
+    }
+    if (!likeCountSpan) {
+      console.error('Like count span (#like-count) not found inside .like-button');
+      displayErrorMessage('.article-actions, #latest-news-articles, #politics-articles, #category-articles, #search-results', 'Unable to like article: Like count element missing.');
+      return;
+    }
+
+    const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
+    if (likedArticles.includes(articleId)) {
+      displayErrorMessage('.article-actions, #latest-news-articles, #politics-articles, #category-articles, #search-results', 'You have already liked this article.');
+      return;
+    }
+
+    let count = parseInt(likeCountSpan.textContent) || 0;
+    likeCountSpan.textContent = count + 1;
+    button.classList.add('liked');
+    button.disabled = true;
+
+    likedArticles.push(articleId);
+    localStorage.setItem('likedArticles', JSON.stringify(likedArticles));
+
+    if (db) {
+      try {
+        await withRetry(() => updateDoc(doc(db, 'articles', articleId), { likes: increment(1) }));
+        console.log(`Like recorded for article ID: ${articleId}`);
+      } catch (error) {
+        console.error('Error updating likes in Firestore:', error.message);
+        displayErrorMessage('.article-actions, #latest-news-articles, #politics-articles, #category-articles, #search-results', 'Failed to save like. Please try again.');
+        likeCountSpan.textContent = count;
+        button.classList.remove('liked');
+        button.disabled = false;
+        localStorage.setItem('likedArticles', JSON.stringify(likedArticles.filter(id => id !== articleId)));
+      }
+    }
+  });
+});
+// Comment submission
+document.querySelectorAll('.comment-submit').forEach(button => {
+  button.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const commentInput = document.getElementById('comment-input');
+    const articleId = button.closest('.article-card')?.dataset.id;
+    if (!commentInput || !articleId) {
+      console.error('Comment input or article ID not found');
+      displayErrorMessage('#comment-list, .article-actions', 'Unable to post comment: Page elements missing.');
+      return;
+    }
+    if (!commentInput.value.trim()) {
+      displayErrorMessage('#comment-list, .article-actions', 'Comment cannot be empty.');
+      return;
+    }
+    if (db) {
+      try {
+        await withRetry(() => addDoc(collection(db, 'articles', articleId, 'comments'), {
+          text: commentInput.value.trim(),
+          timestamp: serverTimestamp(),
+          author: 'Anonymous' // Explicitly set to Anonymous
+        }));
+        commentInput.value = '';
+        loadComments(articleId);
+        console.log(`Comment added for article ID: ${articleId}`);
+      } catch (error) {
+        console.error('Error adding comment:', error.message);
+        displayErrorMessage('#comment-list, .article-actions', 'Failed to post comment. Please try again.');
+      }
+    }
+  });
+});
+
+// Save article
+document.querySelectorAll('.save-button').forEach(button => {
+  button.addEventListener('click', () => {
+    const parentCard = button.closest('.article-card, .news-card');
+    const articleId = parentCard?.dataset.id;
+    if (!parentCard) {
+      console.error('Save button is not inside an .article-card or .news-card element');
+      displayErrorMessage('.article-actions, #latest-news-articles, #politics-articles, #category-articles, #search-results', 'Unable to save article: Article container missing.');
+      return;
+    }
+    if (!articleId) {
+      console.error('Article ID not found for save action');
+      displayErrorMessage('.article-actions, #latest-news-articles, #politics-articles, #category-articles, #search-results', 'Unable to save article: Article ID missing.');
+      return;
+    }
+
+    const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
+    if (savedArticles.includes(articleId)) {
+      displayErrorMessage('.article-actions, #latest-news-articles, #politics-articles, #category-articles, #search-results', 'This article is already saved.');
+      return;
+    }
+
+    savedArticles.push(articleId);
+    localStorage.setItem('savedArticles', JSON.stringify(savedArticles));
+    button.classList.add('saved');
+    button.querySelector('.action-text').textContent = 'Saved';
+    button.disabled = true;
+    console.log(`Article saved locally: ${articleId}`);
+  });
+});
+
 // Load politics articles
 async function loadPoliticsArticles() {
   const politicsArticles = document.getElementById('politics-articles');
@@ -399,8 +672,47 @@ async function fetchPoliticsArticles(reset = false) {
           ${article.breakingNews ? '<span class="breaking-news-badge">Breaking News</span>' : ''}
           ${article.verified ? '<span class="verified-badge">Verified</span>' : ''}
         </a>
+        <div class="article-actions">
+          <div class="action-wrapper">
+            <button class="like-button" aria-label="Like article">
+              <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+              <span class="action-text">Like</span>
+              <span id="like-count">${article.likes || 0}</span>
+            </button>
+          </div>
+          <div class="action-wrapper">
+            <button class="save-button" aria-label="Save article">
+              <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"></path></svg>
+              <span class="action-text">Save</span>
+            </button>
+          </div>
+        </div>
       `;
       politicsArticles.appendChild(articleElement);
+    });
+
+    // Initialize button states for anonymous users
+    document.querySelectorAll('.news-card .save-button').forEach(button => {
+      const articleId = button.closest('.news-card')?.dataset.id;
+      if (articleId) {
+        const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
+        if (savedArticles.includes(articleId)) {
+          button.classList.add('saved');
+          button.querySelector('.action-text').textContent = 'Saved';
+          button.disabled = true;
+        }
+      }
+    });
+
+    document.querySelectorAll('.news-card .like-button').forEach(button => {
+      const articleId = button.closest('.news-card')?.dataset.id;
+      if (articleId) {
+        const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
+        if (likedArticles.includes(articleId)) {
+          button.classList.add('liked');
+          button.disabled = true;
+        }
+      }
     });
 
     lastVisiblePolitics = snapshot.docs[snapshot.docs.length - 1];
@@ -464,7 +776,6 @@ async function fetchLatestNewsArticles(reset = false, loadMoreButton, category =
       articleElement.innerHTML = `
         <a href="article.html?id=${doc.id}" class="article-link">
           <img src="${imageUrl}" 
-               srcset="${imageUrl} {mg src="${imageUrl}" 
                srcset="${imageUrl} 400w, ${imageUrl} 200w, ${imageUrl} 800w" 
                sizes="(max-width: 480px) 100vw, (max-width: 767px) 80vw, 400px" 
                alt="${article.title || 'Article Image'}" 
@@ -477,8 +788,47 @@ async function fetchLatestNewsArticles(reset = false, loadMoreButton, category =
           ${article.breakingNews ? '<span class="breaking-news-badge">Breaking News</span>' : ''}
           ${article.verified ? '<span class="verified-badge">Verified</span>' : ''}
         </a>
+        <div class="article-actions">
+          <div class="action-wrapper">
+            <button class="like-button" aria-label="Like article">
+              <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+              <span class="action-text">Like</span>
+              <span id="like-count">${article.likes || 0}</span>
+            </button>
+          </div>
+          <div class="action-wrapper">
+            <button class="save-button" aria-label="Save article">
+              <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"></path></svg>
+              <span class="action-text">Save</span>
+            </button>
+          </div>
+        </div>
       `;
       latestNewsArticles.appendChild(articleElement);
+    });
+
+    // Initialize button states for anonymous users
+    document.querySelectorAll('.news-card .save-button').forEach(button => {
+      const articleId = button.closest('.news-card')?.dataset.id;
+      if (articleId) {
+        const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
+        if (savedArticles.includes(articleId)) {
+          button.classList.add('saved');
+          button.querySelector('.action-text').textContent = 'Saved';
+          button.disabled = true;
+        }
+      }
+    });
+
+    document.querySelectorAll('.news-card .like-button').forEach(button => {
+      const articleId = button.closest('.news-card')?.dataset.id;
+      if (articleId) {
+        const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
+        if (likedArticles.includes(articleId)) {
+          button.classList.add('liked');
+          button.disabled = true;
+        }
+      }
     });
 
     lastVisibleLatest = snapshot.docs[snapshot.docs.length - 1];
@@ -560,7 +910,7 @@ async function fetchCategoryArticles(category, reset = false) {
 
     if (snapshot.empty && categoryArticles.innerHTML === '') {
       console.warn(`No articles found for category: ${category}`);
-      categoryArticles.innerHTML = '<p>No articles found in this category. Check if articles exist in Firestore with category "${category}".</p>';
+      categoryArticles.innerHTML = '<p>No articles found in this category.</p>';
       if (loadMoreButton) loadMoreButton.style.display = 'none';
       return;
     }
@@ -587,8 +937,47 @@ async function fetchCategoryArticles(category, reset = false) {
           ${article.breakingNews ? '<span class="breaking-news-badge">Breaking News</span>' : ''}
           ${article.verified ? '<span class="verified-badge">Verified</span>' : ''}
         </a>
+        <div class="article-actions">
+          <div class="action-wrapper">
+            <button class="like-button" aria-label="Like article">
+              <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+              <span class="action-text">Like</span>
+              <span id="like-count">${article.likes || 0}</span>
+            </button>
+          </div>
+          <div class="action-wrapper">
+            <button class="save-button" aria-label="Save article">
+              <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"></path></svg>
+              <span class="action-text">Save</span>
+            </button>
+          </div>
+        </div>
       `;
       categoryArticles.appendChild(articleElement);
+    });
+
+    // Initialize button states for anonymous users
+    document.querySelectorAll('.news-card .save-button').forEach(button => {
+      const articleId = button.closest('.news-card')?.dataset.id;
+      if (articleId) {
+        const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
+        if (savedArticles.includes(articleId)) {
+          button.classList.add('saved');
+          button.querySelector('.action-text').textContent = 'Saved';
+          button.disabled = true;
+        }
+      }
+    });
+
+    document.querySelectorAll('.news-card .like-button').forEach(button => {
+      const articleId = button.closest('.news-card')?.dataset.id;
+      if (articleId) {
+        const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
+        if (likedArticles.includes(articleId)) {
+          button.classList.add('liked');
+          button.disabled = true;
+        }
+      }
     });
 
     lastVisibleCategory = snapshot.docs[snapshot.docs.length - 1];
@@ -604,144 +993,6 @@ async function fetchCategoryArticles(category, reset = false) {
       errorMessage += `Verify that articles exist in Firestore with category "${category}" or try refreshing the page.`;
     }
     displayErrorMessage('#category-articles', errorMessage);
-  }
-}
-
-// Load individual article
-async function loadArticle() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const articleId = urlParams.get('id');
-  console.log('Attempting to load article with ID:', articleId);
-  if (!db) {
-    console.error('Database not initialized');
-    displayErrorMessage('#article-content', 'Unable to load article: Database not initialized. Please check your Firebase configuration or internet connection.');
-    return;
-  }
-  if (!articleId) {
-    console.error('No article ID provided in URL');
-    displayErrorMessage('#article-content', 'No article ID provided in the URL. Please select an article from the homepage or check the link.');
-    return;
-  }
-
-  const docRef = doc(db, 'articles', articleId);
-  try {
-    const docSnap = await withRetry(() => getDoc(docRef));
-    if (docSnap.exists()) {
-      const article = docSnap.data();
-      console.log('Article loaded successfully:', article.title, 'Verified:', article.verified, 'Breaking News:', article.breakingNews, 'Image:', article.image);
-
-      const articleTitle = document.getElementById('article-title');
-      const articleMeta = document.getElementById('article-meta');
-      const articleImage = document.getElementById('article-image');
-      const articleVideo = document.getElementById('article-video');
-      const articleBreakingNews = document.getElementById('article-breaking-news');
-      const articleVerified = document.getElementById('article-verified');
-      const articleContent = document.getElementById('article-content');
-      const articleCard = document.querySelector('.article-card');
-      const likeCount = document.getElementById('like-count');
-
-      if (!articleTitle || !articleMeta || !articleContent || !articleCard || !likeCount) {
-        console.error('One or more required DOM elements are missing');
-        displayErrorMessage('#article-content', 'Failed to load article: Page elements are missing. Please check the HTML structure.');
-        return;
-      }
-
-      articleTitle.textContent = article.title || 'Untitled Article';
-      document.querySelector('meta[property="og:title"]').setAttribute('content', article.title || 'Naija Truths Article');
-      document.querySelector('meta[name="description"]').setAttribute('content', article.summary || (article.content ? article.content.substring(0, 160) : 'Article from Naija Truths'));
-      document.querySelector('meta[property="og:description"]').setAttribute('content', article.summary || (article.content ? article.content.substring(0, 160) : 'Article from Naija Truths'));
-      const imageUrl = article.image && isValidUrl(article.image) ? article.image : 'https://via.placeholder.com/1200x630';
-      document.querySelector('meta[property="og:image"]').setAttribute('content', imageUrl);
-      document.title = `Naija Truths - ${article.title || 'Article'}`;
-
-      if (articleImage) {
-        if (article.image && isValidUrl(article.image)) {
-          articleImage.src = article.image;
-          articleImage.srcset = `${article.image} 1200w, ${article.image} 768w, ${article.image} 480w`;
-          articleImage.sizes = '(max-width: 480px) 100vw, (max-width: 768px) 80vw, 800px';
-          articleImage.alt = article.title || 'Article Image';
-          articleImage.loading = 'lazy';
-          articleImage.style.display = 'block';
-          articleImage.onerror = () => {
-            console.warn(`Article image failed to load for ID: ${articleId}, URL: ${article.image}`);
-            articleImage.src = 'https://via.placeholder.com/800x400';
-            articleImage.srcset = 'https://via.placeholder.com/400x200 480w, https://via.placeholder.com/800x400 768w, https://via.placeholder.com/1200x600 1200w';
-            articleImage.sizes = '(max-width: 480px) 100vw, (max-width: 768px) 80vw, 800px';
-            articleImage.style.display = 'block';
-          };
-        } else {
-          articleImage.src = 'https://via.placeholder.com/800x400';
-          articleImage.srcset = 'https://via.placeholder.com/400x200 480w, https://via.placeholder.com/800x400 768w, https://via.placeholder.com/1200x600 1200w';
-          articleImage.sizes = '(max-width: 480px) 100vw, (max-width: 768px) 80vw, 800px';
-          articleImage.alt = 'Article Image';
-          articleImage.loading = 'lazy';
-          articleImage.style.display = 'block';
-        }
-      } else {
-        console.warn('Article image element not found');
-      }
-
-      articleMeta.textContent = `By ${article.writer || 'Anonymous'} on ${formatTimestamp(article.createdAt)}`;
-      articleMeta.classList.add('premium-writer');
-
-      if (articleContent) {
-        articleContent.innerHTML = article.content || 'No content available';
-      }
-
-      if (articleVideo) {
-        if (article.video && isValidUrl(article.video)) {
-          articleVideo.src = article.video;
-          articleVideo.style.display = 'block';
-        } else {
-          articleVideo.style.display = 'none';
-        }
-      } else {
-        console.warn('Article video element not found');
-      }
-
-      if (articleBreakingNews) {
-        articleBreakingNews.style.display = article.breakingNews ? 'block' : 'none';
-      } else {
-        console.warn('Breaking news badge element not found');
-      }
-
-      if (articleVerified) {
-        articleVerified.style.display = article.verified ? 'block' : 'none';
-      } else {
-        console.warn('Verified badge element not found');
-      }
-
-      articleCard.dataset.id = articleId;
-      likeCount.textContent = article.likes || 0;
-
-      // Initialize save button state for anonymous users
-      const saveButton = document.querySelector('.save-button');
-      if (saveButton) {
-        const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
-        if (savedArticles.includes(articleId)) {
-          saveButton.classList.add('saved');
-          saveButton.querySelector('.action-text').textContent = 'Saved';
-          saveButton.disabled = true;
-        }
-      }
-
-      await withRetry(() => updateDoc(docRef, { views: increment(1) }));
-      loadComments(articleId);
-    } else {
-      console.error('Article not found in Firestore for ID:', articleId);
-      displayErrorMessage('#article-content', `Article not found (ID: ${articleId}). It may have been deleted or the ID is incorrect. Check Firestore 'articles' collection or ensure the article exists.`);
-    }
-  } catch (error) {
-    console.error('Error loading article (ID:', articleId, '):', error.message, error.code);
-    let errorMessage = `Failed to load article (ID: ${articleId}): ${error.message}. `;
-    if (error.code === 'permission-denied') {
-      errorMessage += 'Check Firestore security rules to ensure public read access to the "articles" collection.';
-    } else if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
-      errorMessage += 'Network issue detected. Check your internet connection and try again.';
-    } else {
-      errorMessage += 'Check Firestore for the article or try refreshing the page.';
-    }
-    displayErrorMessage('#article-content', errorMessage);
   }
 }
 
@@ -783,11 +1034,12 @@ async function loadComments(articleId) {
         replyForm.addEventListener('submit', async (e) => {
           e.preventDefault();
           const replyInput = replyForm.querySelector('.reply-input');
-          if (replyInput.value) {
+          if (replyInput.value.trim()) {
             try {
               await withRetry(() => addDoc(collection(db, 'articles', articleId, 'comments', commentId, 'replies'), {
-                text: replyInput.value,
-                timestamp: serverTimestamp()
+                text: replyInput.value.trim(),
+                timestamp: serverTimestamp(),
+                author: 'Anonymous'
               }));
               replyForm.remove();
               loadReplies(articleId, commentId);
@@ -859,10 +1111,12 @@ async function loadSearchResults() {
       const article = doc.data();
       const articleElement = document.createElement('div');
       articleElement.classList.add('news-card');
+      articleElement.dataset.id = doc.id;
+      const imageUrl = article.image && isValidUrl(article.image) ? article.image : 'https://via.placeholder.com/400x200';
       articleElement.innerHTML = `
         <a href="article.html?id=${doc.id}" class="article-link">
-          <img src="${article.image && isValidUrl(article.image) ? article.image : 'https://via.placeholder.com/400x200'}" 
-               srcset="${article.image && isValidUrl(article.image) ? `${article.image} 400w, ${article.image} 200w, ${article.image} 800w` : 'https://via.placeholder.com/400x200 400w, https://via.placeholder.com/200x100 200w'}" 
+          <img src="${imageUrl}" 
+               srcset="${imageUrl} 400w, ${imageUrl} 200w, ${imageUrl} 800w" 
                sizes="(max-width: 480px) 100vw, (max-width: 767px) 80vw, 400px" 
                alt="${article.title || 'Article Image'}" 
                loading="lazy"
@@ -874,8 +1128,47 @@ async function loadSearchResults() {
           ${article.breakingNews ? '<span class="breaking-news-badge">Breaking News</span>' : ''}
           ${article.verified ? '<span class="verified-badge">Verified</span>' : ''}
         </a>
+        <div class="article-actions">
+          <div class="action-wrapper">
+            <button class="like-button" aria-label="Like article">
+              <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+              <span class="action-text">Like</span>
+              <span id="like-count">${article.likes || 0}</span>
+            </button>
+          </div>
+          <div class="action-wrapper">
+            <button class="save-button" aria-label="Save article">
+              <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"></path></svg>
+              <span class="action-text">Save</span>
+            </button>
+          </div>
+        </div>
       `;
       searchResults.appendChild(articleElement);
+    });
+
+    // Initialize button states for anonymous users
+    document.querySelectorAll('.news-card .save-button').forEach(button => {
+      const articleId = button.closest('.news-card')?.dataset.id;
+      if (articleId) {
+        const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
+        if (savedArticles.includes(articleId)) {
+          button.classList.add('saved');
+          button.querySelector('.action-text').textContent = 'Saved';
+          button.disabled = true;
+        }
+      }
+    });
+
+    document.querySelectorAll('.news-card .like-button').forEach(button => {
+      const articleId = button.closest('.news-card')?.dataset.id;
+      if (articleId) {
+        const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
+        if (likedArticles.includes(articleId)) {
+          button.classList.add('liked');
+          button.disabled = true;
+        }
+      }
     });
   } catch (error) {
     console.error('Error loading search results:', error.message);
@@ -926,7 +1219,7 @@ if (articleForm) {
   articleForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!db || !auth.currentUser) {
-      displayErrorMessage('#article-form', 'Not logged in or database not initialized.');
+      displayErrorMessage('#article-form', 'You must be logged in as an admin to publish or update articles.');
       return;
     }
     const id = document.getElementById('article-id').value;
@@ -1078,7 +1371,7 @@ if (clearButton) {
 // Delete article
 async function deleteArticle(articleId) {
   if (!db || !auth.currentUser) {
-    displayErrorMessage('#article-list', 'Not logged in or database not initialized.');
+    displayErrorMessage('#article-list', 'You must be logged in as an admin to delete articles.');
     return;
   }
   if (confirm('Are you sure you want to delete this article? This action cannot be undone.')) {
@@ -1300,106 +1593,6 @@ async function searchAdminArticles() {
     displayErrorMessage('#article-list', errorMessage);
   }
 }
-// Like button
-document.querySelectorAll('.like-button').forEach(button => {
-  button.addEventListener('click', async () => {
-    const articleId = button.closest('.article-card')?.dataset.id;
-    const likeCountSpan = button.querySelector('#like-count');
-    if (!articleId || !likeCountSpan) {
-      console.error('Article ID or like count element not found');
-      displayErrorMessage('.article-card', 'Unable to like article: Page elements missing.');
-      return;
-    }
-
-    // Check if article is already liked in localStorage
-    const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
-    if (likedArticles.includes(articleId)) {
-      displayErrorMessage('.article-card', 'You have already liked this article.');
-      return;
-    }
-
-    let count = parseInt(likeCountSpan.textContent) || 0;
-    likeCountSpan.textContent = count + 1;
-    button.classList.add('liked');
-    button.disabled = true;
-
-    // Store like in localStorage
-    likedArticles.push(articleId);
-    localStorage.setItem('likedArticles', JSON.stringify(likedArticles));
-
-    if (db) {
-      try {
-        await withRetry(() => updateDoc(doc(db, 'articles', articleId), { likes: increment(1) }));
-        console.log(`Like recorded for article ID: ${articleId}`);
-      } catch (error) {
-        console.error('Error updating likes in Firestore:', error.message);
-        displayErrorMessage('.article-card', 'Failed to update likes. Please try again.');
-        likeCountSpan.textContent = count;
-        button.classList.remove('liked');
-        button.disabled = false;
-        // Remove from localStorage if Firestore update fails
-        localStorage.setItem('likedArticles', JSON.stringify(likedArticles.filter(id => id !== articleId)));
-      }
-    }
-  });
-});
-
-// Comment submission
-document.querySelectorAll('.comment-submit').forEach(button => {
-  button.addEventListener('click', async (e) => {
-    e.preventDefault();
-    const commentInput = document.getElementById('comment-input');
-    const articleId = document.querySelector('.article-card')?.dataset.id;
-    if (!commentInput || !articleId) {
-      console.error('Comment input or article ID not found');
-      displayErrorMessage('#comment-list', 'Unable to post comment: Page elements missing.');
-      return;
-    }
-    if (!commentInput.value) {
-      displayErrorMessage('#comment-list', 'Comment cannot be empty.');
-      return;
-    }
-    if (db) {
-      try {
-        await withRetry(() => addDoc(collection(db, 'articles', articleId, 'comments'), {
-          text: commentInput.value,
-          timestamp: serverTimestamp()
-        }));
-        commentInput.value = '';
-        loadComments(articleId);
-        console.log(`Comment added for article ID: ${articleId}`);
-      } catch (error) {
-        console.error('Error adding comment:', error.message);
-        displayErrorMessage('#comment-list', 'Failed to post comment. Please try again.');
-      }
-    }
-  });
-});
-
-// Save article
-document.querySelectorAll('.save-button').forEach(button => {
-  button.addEventListener('click', () => {
-    const articleId = button.closest('.article-card')?.dataset.id;
-    if (!articleId) {
-      console.error('Article ID not found for save action');
-      displayErrorMessage('.article-card', 'Unable to save article: Article ID missing.');
-      return;
-    }
-
-    const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
-    if (savedArticles.includes(articleId)) {
-      displayErrorMessage('.article-card', 'This article is already saved.');
-      return;
-    }
-
-    savedArticles.push(articleId);
-    localStorage.setItem('savedArticles', JSON.stringify(savedArticles));
-    button.classList.add('saved');
-    button.querySelector('.action-text').textContent = 'Saved';
-    button.disabled = true;
-    console.log(`Article saved locally: ${articleId}`);
-  });
-});
 
 // Share buttons
 document.querySelectorAll('.share-button').forEach(button => {
@@ -1550,7 +1743,6 @@ const scrollToTopWrapper = document.querySelector('.scroll-to-top-wrapper');
 const scrollToTopButton = document.querySelector('.scroll-to-top');
 
 if (scrollToTopWrapper && scrollToTopButton) {
-  // Update button visibility
   function updateScrollButtonVisibility() {
     const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
     if (scrollTop > 100) {
@@ -1562,20 +1754,16 @@ if (scrollToTopWrapper && scrollToTopButton) {
     }
   }
 
-  // Scroll event listener
   window.addEventListener('scroll', updateScrollButtonVisibility);
 
-  // Initialize button attributes for accessibility
   scrollToTopButton.setAttribute('tabindex', '0');
   scrollToTopButton.setAttribute('role', 'button');
   scrollToTopButton.setAttribute('aria-label', 'Scroll to top');
 
-  // Click event for scroll-to-top
   scrollToTopButton.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  // Keyboard event for accessibility
   scrollToTopButton.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -1583,7 +1771,6 @@ if (scrollToTopWrapper && scrollToTopButton) {
     }
   });
 
-  // Initial update
   updateScrollButtonVisibility();
 } else {
   console.warn('Scroll-to-top wrapper or button not found in DOM.');
@@ -1658,7 +1845,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Initialize save button states for all articles
       document.querySelectorAll('.save-button').forEach(button => {
-        const articleId = button.closest('.article-card')?.dataset.id;
+        const articleId = button.closest('.article-card, .news-card')?.dataset.id;
         if (articleId) {
           const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
           if (savedArticles.includes(articleId)) {
@@ -1671,7 +1858,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Initialize like button states for all articles
       document.querySelectorAll('.like-button').forEach(button => {
-        const articleId = button.closest('.article-card')?.dataset.id;
+        const articleId = button.closest('.article-card, .news-card')?.dataset.id;
         if (articleId) {
           const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
           if (likedArticles.includes(articleId)) {
